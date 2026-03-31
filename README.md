@@ -1,3 +1,1 @@
-# Welcome to your Lovable project
-
-TODO: Document your project here
+A web application that simulates the operation of a Pushdown Automaton (PDA). During simulation, the application visually displays stack contents and transitions while processing an input string. The visualization clearly shows push and pop operations on the stack. This project allows learners understand how PDAs recognize context-free languages.
