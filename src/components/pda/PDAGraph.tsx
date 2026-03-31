@@ -1,74 +1,84 @@
-import { PDAConfig, PDAState, PDATransition, EPSILON } from '@/lib/pda-types';
+import { PDAConfig, PDATransition, EPSILON } from '@/lib/pda-types';
 import { motion } from 'framer-motion';
-import { useCallback, useRef, useState } from 'react';
+import { useMemo } from 'react';
 
 interface PDAGraphProps {
   config: PDAConfig;
   currentStateId?: string;
   activeTransitionId?: string;
-  onUpdateState?: (state: PDAState) => void;
 }
 
-export function PDAGraph({ config, currentStateId, activeTransitionId, onUpdateState }: PDAGraphProps) {
-  const svgRef = useRef<SVGSVGElement>(null);
-  const [dragging, setDragging] = useState<string | null>(null);
+export function PDAGraph({ config, currentStateId, activeTransitionId }: PDAGraphProps) {
+  // Auto-layout states in a nice arrangement if positions are too cramped
+  const layoutStates = useMemo(() => {
+    if (config.states.length === 0) return [];
+    return config.states.map((s, i) => ({
+      ...s,
+      x: s.x,
+      y: s.y,
+    }));
+  }, [config.states]);
 
-  const handleMouseDown = useCallback((stateId: string) => {
-    if (onUpdateState) setDragging(stateId);
-  }, [onUpdateState]);
+  // Compute viewBox to fit all states with padding
+  const viewBox = useMemo(() => {
+    if (layoutStates.length === 0) return '0 0 600 400';
+    const padding = 100;
+    const xs = layoutStates.map(s => s.x);
+    const ys = layoutStates.map(s => s.y);
+    const minX = Math.min(...xs) - padding;
+    const minY = Math.min(...ys) - padding;
+    const maxX = Math.max(...xs) + padding;
+    const maxY = Math.max(...ys) + padding;
+    const w = Math.max(maxX - minX, 300);
+    const h = Math.max(maxY - minY, 250);
+    return `${minX} ${minY} ${w} ${h}`;
+  }, [layoutStates]);
 
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!dragging || !svgRef.current || !onUpdateState) return;
-    const rect = svgRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const state = config.states.find(s => s.id === dragging);
-    if (state) onUpdateState({ ...state, x, y });
-  }, [dragging, config.states, onUpdateState]);
-
-  const handleMouseUp = useCallback(() => setDragging(null), []);
-
-  const getTransitionPath = (t: PDATransition): { path: string; labelPos: { x: number; y: number }; angle: number } => {
-    const from = config.states.find(s => s.id === t.fromState);
-    const to = config.states.find(s => s.id === t.toState);
-    if (!from || !to) return { path: '', labelPos: { x: 0, y: 0 }, angle: 0 };
+  const getTransitionPath = (t: PDATransition): { path: string; labelPos: { x: number; y: number } } => {
+    const from = layoutStates.find(s => s.id === t.fromState);
+    const to = layoutStates.find(s => s.id === t.toState);
+    if (!from || !to) return { path: '', labelPos: { x: 0, y: 0 } };
 
     if (from.id === to.id) {
-      // Self-loop
-      const r = 30;
       return {
-        path: `M ${from.x - 15} ${from.y - 28} C ${from.x - 40} ${from.y - 80} ${from.x + 40} ${from.y - 80} ${from.x + 15} ${from.y - 28}`,
-        labelPos: { x: from.x, y: from.y - 75 },
-        angle: 0,
+        path: `M ${from.x - 15} ${from.y - 28} C ${from.x - 45} ${from.y - 85} ${from.x + 45} ${from.y - 85} ${from.x + 15} ${from.y - 28}`,
+        labelPos: { x: from.x, y: from.y - 80 },
       };
     }
 
-    // Check for parallel transitions (opposite direction)
+    // Group transitions between same pair to offset them
+    const sameDirectionTransitions = config.transitions.filter(
+      other => other.fromState === t.fromState && other.toState === t.toState
+    );
+    const indexInGroup = sameDirectionTransitions.indexOf(t);
+
     const hasReverse = config.transitions.some(
       other => other.id !== t.id && other.fromState === t.toState && other.toState === t.fromState
     );
 
     const dx = to.x - from.x;
     const dy = to.y - from.y;
-    const len = Math.sqrt(dx * dx + dy * dy);
-    const angle = Math.atan2(dy, dx);
+    const len = Math.sqrt(dx * dx + dy * dy) || 1;
+    const nx = -dy / len;
+    const ny = dx / len;
 
-    if (hasReverse) {
-      // Curved path
-      const offset = 30;
-      const mx = (from.x + to.x) / 2 - (dy / len) * offset;
-      const my = (from.y + to.y) / 2 + (dx / len) * offset;
+    const baseOffset = hasReverse ? 30 : 0;
+    const groupOffset = (indexInGroup - (sameDirectionTransitions.length - 1) / 2) * 20;
+    const totalOffset = baseOffset + groupOffset;
+
+    const mx = (from.x + to.x) / 2 + nx * totalOffset;
+    const my = (from.y + to.y) / 2 + ny * totalOffset;
+
+    if (totalOffset !== 0) {
       return {
         path: `M ${from.x} ${from.y} Q ${mx} ${my} ${to.x} ${to.y}`,
-        labelPos: { x: mx, y: my - 10 },
-        angle: angle * (180 / Math.PI),
+        labelPos: { x: mx, y: my - 12 },
       };
     }
 
     return {
       path: `M ${from.x} ${from.y} L ${to.x} ${to.y}`,
-      labelPos: { x: (from.x + to.x) / 2 - (dy / len) * 15, y: (from.y + to.y) / 2 + (dx / len) * 15 - 8 },
-      angle: angle * (180 / Math.PI),
+      labelPos: { x: (from.x + to.x) / 2 + nx * 15, y: (from.y + to.y) / 2 + ny * 15 - 8 },
     };
   };
 
@@ -78,37 +88,56 @@ export function PDAGraph({ config, currentStateId, activeTransitionId, onUpdateS
 
   return (
     <svg
-      ref={svgRef}
       className="w-full h-full bg-card rounded-lg"
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
+      viewBox={viewBox}
+      preserveAspectRatio="xMidYMid meet"
     >
       <defs>
         <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="32" refY="3.5" orient="auto">
-          <polygon points="0 0, 10 3.5, 0 7" className="fill-transition-line" />
+          <polygon points="0 0, 10 3.5, 0 7" fill="hsl(var(--transition-line))" />
         </marker>
         <marker id="arrowhead-active" markerWidth="10" markerHeight="7" refX="32" refY="3.5" orient="auto">
-          <polygon points="0 0, 10 3.5, 0 7" className="fill-state-current" />
+          <polygon points="0 0, 10 3.5, 0 7" fill="hsl(var(--state-current))" />
         </marker>
         <marker id="arrowhead-self" markerWidth="10" markerHeight="7" refX="22" refY="3.5" orient="auto">
-          <polygon points="0 0, 10 3.5, 0 7" className="fill-transition-line" />
+          <polygon points="0 0, 10 3.5, 0 7" fill="hsl(var(--transition-line))" />
         </marker>
         <marker id="arrowhead-self-active" markerWidth="10" markerHeight="7" refX="22" refY="3.5" orient="auto">
-          <polygon points="0 0, 10 3.5, 0 7" className="fill-state-current" />
+          <polygon points="0 0, 10 3.5, 0 7" fill="hsl(var(--state-current))" />
         </marker>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="3" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
       </defs>
 
       {/* Start arrow */}
-      {config.states.filter(s => s.isStart).map(s => (
+      {layoutStates.filter(s => s.isStart).map(s => (
         <g key={`start-${s.id}`}>
-          <line x1={s.x - 60} y1={s.y} x2={s.x - 32} y2={s.y} stroke="hsl(var(--foreground))" strokeWidth="2" markerEnd="url(#arrowhead)" />
+          <line
+            x1={s.x - 65} y1={s.y} x2={s.x - 32} y2={s.y}
+            stroke="hsl(var(--foreground))" strokeWidth="2"
+            markerEnd="url(#arrowhead)"
+          />
+          <text
+            x={s.x - 70} y={s.y - 8}
+            textAnchor="end"
+            fill="hsl(var(--muted-foreground))"
+            fontSize="11"
+            fontFamily="var(--font-mono)"
+          >
+            start
+          </text>
         </g>
       ))}
 
       {/* Transitions */}
       {config.transitions.map(t => {
         const { path, labelPos } = getTransitionPath(t);
+        if (!path) return null;
         const isActive = activeTransitionId === t.id;
         const isSelf = t.fromState === t.toState;
         return (
@@ -117,25 +146,30 @@ export function PDAGraph({ config, currentStateId, activeTransitionId, onUpdateS
               d={path}
               fill="none"
               stroke={isActive ? 'hsl(var(--state-current))' : 'hsl(var(--transition-line))'}
-              strokeWidth={isActive ? 3 : 2}
+              strokeWidth={isActive ? 3 : 1.5}
               markerEnd={`url(#${isSelf ? 'arrowhead-self' : 'arrowhead'}${isActive ? '-active' : ''})`}
               className="transition-all duration-300"
+              filter={isActive ? 'url(#glow)' : undefined}
             />
             <rect
-              x={labelPos.x - 45}
+              x={labelPos.x - 50}
               y={labelPos.y - 10}
-              width={90}
+              width={100}
               height={20}
               rx={4}
               fill="hsl(var(--card))"
-              fillOpacity={0.9}
+              fillOpacity={0.95}
+              stroke={isActive ? 'hsl(var(--state-current))' : 'hsl(var(--border))'}
+              strokeWidth={0.5}
             />
             <text
               x={labelPos.x}
               y={labelPos.y + 4}
               textAnchor="middle"
-              className="fill-foreground text-[11px]"
-              style={{ fontFamily: 'var(--font-mono)' }}
+              fill={isActive ? 'hsl(var(--state-current))' : 'hsl(var(--foreground))'}
+              fontSize="11"
+              fontFamily="var(--font-mono)"
+              fontWeight={isActive ? 600 : 400}
             >
               {formatTransitionLabel(t)}
             </text>
@@ -144,10 +178,10 @@ export function PDAGraph({ config, currentStateId, activeTransitionId, onUpdateS
       })}
 
       {/* States */}
-      {config.states.map(state => {
+      {layoutStates.map(state => {
         const isCurrent = currentStateId === state.id;
         return (
-          <g key={state.id} onMouseDown={() => handleMouseDown(state.id)} className="cursor-grab active:cursor-grabbing">
+          <g key={state.id}>
             {/* Glow for current state */}
             {isCurrent && (
               <motion.circle
@@ -158,8 +192,9 @@ export function PDAGraph({ config, currentStateId, activeTransitionId, onUpdateS
                 stroke="hsl(var(--state-current))"
                 strokeWidth={2}
                 initial={{ r: 30, opacity: 0 }}
-                animate={{ r: 38, opacity: [0.5, 1, 0.5] }}
+                animate={{ r: 40, opacity: [0.4, 1, 0.4] }}
                 transition={{ duration: 1.5, repeat: Infinity }}
+                filter="url(#glow)"
               />
             )}
             {/* Accepting state double circle */}
@@ -177,7 +212,7 @@ export function PDAGraph({ config, currentStateId, activeTransitionId, onUpdateS
               cx={state.x}
               cy={state.y}
               r={26}
-              fill={isCurrent ? 'hsl(var(--state-current) / 0.2)' : 'hsl(var(--secondary))'}
+              fill={isCurrent ? 'hsl(var(--state-current) / 0.15)' : 'hsl(var(--secondary))'}
               stroke={
                 isCurrent
                   ? 'hsl(var(--state-current))'
@@ -185,14 +220,17 @@ export function PDAGraph({ config, currentStateId, activeTransitionId, onUpdateS
                   ? 'hsl(var(--state-accepting))'
                   : 'hsl(var(--primary))'
               }
-              strokeWidth={2}
+              strokeWidth={2.5}
               className="transition-all duration-300"
             />
             <text
               x={state.x}
               y={state.y + 5}
               textAnchor="middle"
-              className="fill-foreground text-sm font-mono font-semibold select-none pointer-events-none"
+              fill="hsl(var(--foreground))"
+              fontSize="14"
+              fontFamily="var(--font-mono)"
+              fontWeight={600}
             >
               {state.label}
             </text>
