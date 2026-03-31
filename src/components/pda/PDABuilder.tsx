@@ -220,7 +220,7 @@ export function PDABuilder({ config, onConfigChange }: PDABuilderProps) {
               />
             </div>
           </div>
-        </ScrollArea>
+        </div>
       )}
     </div>
   );
