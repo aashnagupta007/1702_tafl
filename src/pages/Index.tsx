@@ -28,12 +28,8 @@ const PDASimulator = () => {
   const currentStep = currentPath?.steps[currentStepIndex];
   const isSimulated = paths.length > 0;
 
-  const handleUpdateState = useCallback((updatedState: PDAState) => {
-    setConfig(prev => ({
-      ...prev,
-      states: prev.states.map(s => s.id === updatedState.id ? updatedState : s),
-    }));
-  }, []);
+
+
 
   const runSimulation = useCallback(() => {
     const result = simulatePDA(config, inputString);
