@@ -180,7 +180,6 @@ const PDASimulator = () => {
               config={config}
               currentStateId={currentStep?.stateId}
               activeTransitionId={currentStep?.transitionUsed?.id}
-              onUpdateState={handleUpdateState}
             />
           </div>
           <div className="border-t border-border p-3 bg-card/50 max-h-[50%] overflow-auto">
