@@ -17,6 +17,7 @@ let transCounter = 0;
 
 export function PDABuilder({ config, onConfigChange }: PDABuilderProps) {
   const [showBuilder, setShowBuilder] = useState(false);
+  const transitionsEndRef = useRef<HTMLDivElement>(null);
 
   const addState = () => {
     const id = `q${config.states.length}`;
