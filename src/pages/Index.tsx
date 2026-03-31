@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { PDAConfig, PDAState, SimulationStep, ComputationPath } from '@/lib/pda-types';
+import { PDAConfig, SimulationStep, ComputationPath } from '@/lib/pda-types';
 import { simulatePDA } from '@/lib/pda-engine';
 import { EXAMPLE_PDAS } from '@/lib/pda-examples';
 import { PDAGraph } from '@/components/pda/PDAGraph';
@@ -28,12 +28,8 @@ const PDASimulator = () => {
   const currentStep = currentPath?.steps[currentStepIndex];
   const isSimulated = paths.length > 0;
 
-  const handleUpdateState = useCallback((updatedState: PDAState) => {
-    setConfig(prev => ({
-      ...prev,
-      states: prev.states.map(s => s.id === updatedState.id ? updatedState : s),
-    }));
-  }, []);
+
+
 
   const runSimulation = useCallback(() => {
     const result = simulatePDA(config, inputString);
@@ -180,7 +176,6 @@ const PDASimulator = () => {
               config={config}
               currentStateId={currentStep?.stateId}
               activeTransitionId={currentStep?.transitionUsed?.id}
-              onUpdateState={handleUpdateState}
             />
           </div>
           <div className="border-t border-border p-3 bg-card/50 max-h-[50%] overflow-auto">
