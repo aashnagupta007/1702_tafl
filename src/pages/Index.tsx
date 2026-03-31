@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { PDAConfig, PDAState, SimulationStep, ComputationPath } from '@/lib/pda-types';
+import { PDAConfig, SimulationStep, ComputationPath } from '@/lib/pda-types';
 import { simulatePDA } from '@/lib/pda-engine';
 import { EXAMPLE_PDAS } from '@/lib/pda-examples';
 import { PDAGraph } from '@/components/pda/PDAGraph';
