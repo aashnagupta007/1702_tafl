@@ -6,6 +6,23 @@ import {
   EPSILON,
 } from './pda-types';
 
+function checkAcceptance(
+  config: PDAConfig,
+  stateId: string,
+  inputIndex: number,
+  inputLength: number,
+  stack: string[]
+): boolean {
+  if (inputIndex < inputLength) return false;
+  const state = config.states.find(s => s.id === stateId);
+  const mode = config.acceptanceMode || 'final-state';
+  const byFinalState = !!state?.isAccepting;
+  const byEmptyStack = stack.length === 0;
+  if (mode === 'final-state') return byFinalState;
+  if (mode === 'empty-stack') return byEmptyStack;
+  return byFinalState || byEmptyStack; // 'both'
+}
+
 interface Configuration {
   stateId: string;
   inputIndex: number;
