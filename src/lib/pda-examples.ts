@@ -19,6 +19,7 @@ export const EXAMPLE_PDAS: PDAConfig[] = [
     stackAlphabet: ['A', 'Z'],
     startState: 'q0',
     initialStackSymbol: 'Z',
+    acceptanceMode: 'final-state',
   },
   {
     id: 'palindrome',
