@@ -134,45 +134,58 @@ export function PDAGraph({ config, currentStateId, activeTransitionId }: PDAGrap
         </g>
       ))}
 
-      {/* Transitions */}
-      {config.transitions.map(t => {
-        const { path, labelPos } = getTransitionPath(t);
+      {/* Transitions - grouped by (from, to) pair */}
+      {Array.from(transitionGroups.entries()).map(([key, transitions]) => {
+        const first = transitions[0];
+        const { path, labelPos } = getGroupPath(first.fromState, first.toState);
         if (!path) return null;
-        const isActive = activeTransitionId === t.id;
-        const isSelf = t.fromState === t.toState;
+        const isSelf = first.fromState === first.toState;
+        const isAnyActive = transitions.some(t => activeTransitionId === t.id);
+        const lineHeight = 14;
+        const totalHeight = transitions.length * lineHeight + 6;
+        const labelWidth = 110;
+
         return (
-          <g key={t.id}>
+          <g key={key}>
             <path
               d={path}
               fill="none"
-              stroke={isActive ? 'hsl(var(--state-current))' : 'hsl(var(--transition-line))'}
-              strokeWidth={isActive ? 3 : 1.5}
-              markerEnd={`url(#${isSelf ? 'arrowhead-self' : 'arrowhead'}${isActive ? '-active' : ''})`}
+              stroke={isAnyActive ? 'hsl(var(--state-current))' : 'hsl(var(--transition-line))'}
+              strokeWidth={isAnyActive ? 3 : 1.5}
+              markerEnd={`url(#${isSelf ? 'arrowhead-self' : 'arrowhead'}${isAnyActive ? '-active' : ''})`}
               className="transition-all duration-300"
-              filter={isActive ? 'url(#glow)' : undefined}
+              filter={isAnyActive ? 'url(#glow)' : undefined}
             />
+            {/* Label background - offset away from the line */}
             <rect
-              x={labelPos.x - 50}
-              y={labelPos.y - 10}
-              width={100}
-              height={20}
+              x={labelPos.x - labelWidth / 2}
+              y={labelPos.y - totalHeight / 2 - 18}
+              width={labelWidth}
+              height={totalHeight}
               rx={4}
               fill="hsl(var(--card))"
               fillOpacity={0.95}
-              stroke={isActive ? 'hsl(var(--state-current))' : 'hsl(var(--border))'}
+              stroke={isAnyActive ? 'hsl(var(--state-current))' : 'hsl(var(--border))'}
               strokeWidth={0.5}
             />
-            <text
-              x={labelPos.x}
-              y={labelPos.y + 4}
-              textAnchor="middle"
-              fill={isActive ? 'hsl(var(--state-current))' : 'hsl(var(--foreground))'}
-              fontSize="11"
-              fontFamily="var(--font-mono)"
-              fontWeight={isActive ? 600 : 400}
-            >
-              {formatTransitionLabel(t)}
-            </text>
+            {transitions.map((t, i) => {
+              const isActive = activeTransitionId === t.id;
+              const ty = labelPos.y - totalHeight / 2 - 18 + 12 + i * lineHeight;
+              return (
+                <text
+                  key={t.id}
+                  x={labelPos.x}
+                  y={ty}
+                  textAnchor="middle"
+                  fill={isActive ? 'hsl(var(--state-current))' : 'hsl(var(--foreground))'}
+                  fontSize="10"
+                  fontFamily="var(--font-mono)"
+                  fontWeight={isActive ? 700 : 400}
+                >
+                  {formatTransitionLabel(t)}
+                </text>
+              );
+            })}
           </g>
         );
       })}
