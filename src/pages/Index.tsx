@@ -99,19 +99,34 @@ const PDASimulator = () => {
           <h1 className="text-lg font-bold font-mono text-primary tracking-tight">PDA Simulator</h1>
           <span className="text-xs text-muted-foreground font-mono">Pushdown Automaton</span>
         </div>
-        <div className="flex items-center gap-2">
-          <Label className="text-xs font-mono text-muted-foreground">Speed:</Label>
-          <Select value={speed.toString()} onValueChange={v => setSpeed(parseInt(v))}>
-            <SelectTrigger className="h-7 w-24 text-xs font-mono">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1200" className="text-xs font-mono">Slow</SelectItem>
-              <SelectItem value="800" className="text-xs font-mono">Normal</SelectItem>
-              <SelectItem value="400" className="text-xs font-mono">Fast</SelectItem>
-              <SelectItem value="150" className="text-xs font-mono">Turbo</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Label className="text-xs font-mono text-muted-foreground">Acceptance:</Label>
+            <Select value={config.acceptanceMode} onValueChange={(v: AcceptanceMode) => updateAcceptanceMode(v)}>
+              <SelectTrigger className="h-7 w-32 text-xs font-mono">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="final-state" className="text-xs font-mono">Final State</SelectItem>
+                <SelectItem value="empty-stack" className="text-xs font-mono">Empty Stack</SelectItem>
+                <SelectItem value="both" className="text-xs font-mono">Either</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-2">
+            <Label className="text-xs font-mono text-muted-foreground">Speed:</Label>
+            <Select value={speed.toString()} onValueChange={v => setSpeed(parseInt(v))}>
+              <SelectTrigger className="h-7 w-24 text-xs font-mono">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1200" className="text-xs font-mono">Slow</SelectItem>
+                <SelectItem value="800" className="text-xs font-mono">Normal</SelectItem>
+                <SelectItem value="400" className="text-xs font-mono">Fast</SelectItem>
+                <SelectItem value="150" className="text-xs font-mono">Turbo</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </header>
 
