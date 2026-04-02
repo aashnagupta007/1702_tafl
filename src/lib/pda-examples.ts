@@ -61,5 +61,6 @@ export const EXAMPLE_PDAS: PDAConfig[] = [
     stackAlphabet: ['X', 'Z'],
     startState: 'q0',
     initialStackSymbol: 'Z',
+    acceptanceMode: 'final-state',
   },
 ];
