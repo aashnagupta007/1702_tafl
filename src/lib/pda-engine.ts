@@ -130,9 +130,7 @@ export function simulatePDA(
       );
 
       if (nextTransitions.length === 0) {
-        const endState = config.states.find((s) => s.id === t.toState);
-        const accepted =
-          newInputIndex >= inputString.length && !!endState?.isAccepting;
+        const accepted = checkAcceptance(config, t.toState, newInputIndex, inputString.length, newStack);
         paths.push({ steps: [...steps, newStep], accepted });
       } else {
         queue.push(newConfig);
