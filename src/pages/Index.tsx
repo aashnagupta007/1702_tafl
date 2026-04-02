@@ -52,6 +52,15 @@ const PDASimulator = () => {
     setCurrentStepIndex(prev => Math.min(prev + 1, currentPath.steps.length - 1));
   }, [currentPath]);
 
+  const stepBackward = useCallback(() => {
+    setCurrentStepIndex(prev => Math.max(prev - 1, 0));
+  }, []);
+
+  const updateAcceptanceMode = useCallback((mode: AcceptanceMode) => {
+    setConfig(prev => ({ ...prev, acceptanceMode: mode }));
+    reset();
+  }, [reset]);
+
   const autoRun = useCallback(() => {
     if (!isSimulated) {
       runSimulation();
