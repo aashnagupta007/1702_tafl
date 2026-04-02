@@ -24,27 +24,31 @@ export const EXAMPLE_PDAS: PDAConfig[] = [
   },
   {
     id: 'palindrome',
-    name: 'Even-length Palindromes (wcw^R)',
+    name: 'Palindromes wcw^R (w ∈ {a,b,c}*)',
     states: [
       { id: 'q0', label: 'q0', x: 100, y: 200, isStart: true, isAccepting: false },
       { id: 'q1', label: 'q1', x: 300, y: 200, isStart: false, isAccepting: false },
       { id: 'q2', label: 'q2', x: 500, y: 200, isStart: false, isAccepting: false },
     ],
     transitions: [
-      { id: 't1', fromState: 'q0', toState: 'q0', inputSymbol: 'a', stackTop: 'Z', stackPush: 'AZ' },
-      { id: 't2', fromState: 'q0', toState: 'q0', inputSymbol: 'b', stackTop: 'Z', stackPush: 'BZ' },
-      { id: 't3', fromState: 'q0', toState: 'q0', inputSymbol: 'a', stackTop: 'A', stackPush: 'AA' },
-      { id: 't4', fromState: 'q0', toState: 'q0', inputSymbol: 'a', stackTop: 'B', stackPush: 'AB' },
-      { id: 't5', fromState: 'q0', toState: 'q0', inputSymbol: 'b', stackTop: 'A', stackPush: 'BA' },
-      { id: 't6', fromState: 'q0', toState: 'q0', inputSymbol: 'b', stackTop: 'B', stackPush: 'BB' },
-      { id: 't7', fromState: 'q0', toState: 'q1', inputSymbol: 'c', stackTop: 'A', stackPush: 'A' },
-      { id: 't8', fromState: 'q0', toState: 'q1', inputSymbol: 'c', stackTop: 'B', stackPush: 'B' },
-      { id: 't9', fromState: 'q1', toState: 'q1', inputSymbol: 'a', stackTop: 'A', stackPush: EPSILON },
-      { id: 't10', fromState: 'q1', toState: 'q1', inputSymbol: 'b', stackTop: 'B', stackPush: EPSILON },
+      // Push phase (q0 self-loops): push input symbols onto stack
+      { id: 't1', fromState: 'q0', toState: 'q0', inputSymbol: 'a', stackTop: EPSILON, stackPush: 'A' },
+      { id: 't2', fromState: 'q0', toState: 'q0', inputSymbol: 'b', stackTop: EPSILON, stackPush: 'B' },
+      { id: 't3', fromState: 'q0', toState: 'q0', inputSymbol: 'c', stackTop: EPSILON, stackPush: 'C' },
+      // Center marker 'c' (q0→q1): read c without changing stack
+      { id: 't4', fromState: 'q0', toState: 'q1', inputSymbol: 'c', stackTop: 'A', stackPush: 'A' },
+      { id: 't5', fromState: 'q0', toState: 'q1', inputSymbol: 'c', stackTop: 'B', stackPush: 'B' },
+      { id: 't6', fromState: 'q0', toState: 'q1', inputSymbol: 'c', stackTop: 'C', stackPush: 'C' },
+      { id: 't7', fromState: 'q0', toState: 'q1', inputSymbol: 'c', stackTop: 'Z', stackPush: 'Z' },
+      // Pop/match phase (q1 self-loops): match input with stack top
+      { id: 't8', fromState: 'q1', toState: 'q1', inputSymbol: 'a', stackTop: 'A', stackPush: EPSILON },
+      { id: 't9', fromState: 'q1', toState: 'q1', inputSymbol: 'b', stackTop: 'B', stackPush: EPSILON },
+      { id: 't10', fromState: 'q1', toState: 'q1', inputSymbol: 'c', stackTop: 'C', stackPush: EPSILON },
+      // Accept by empty stack (q1→q2): pop Z
       { id: 't11', fromState: 'q1', toState: 'q2', inputSymbol: EPSILON, stackTop: 'Z', stackPush: EPSILON },
     ],
     inputAlphabet: ['a', 'b', 'c'],
-    stackAlphabet: ['A', 'B', 'Z'],
+    stackAlphabet: ['A', 'B', 'C', 'Z'],
     startState: 'q0',
     initialStackSymbol: 'Z',
     acceptanceMode: 'empty-stack',
