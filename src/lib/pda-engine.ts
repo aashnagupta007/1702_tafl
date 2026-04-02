@@ -89,7 +89,7 @@ export function simulatePDA(
     if (transitions.length === 0) {
       // Dead end - check if accepted
       const state = config.states.find((s) => s.id === stateId);
-      const accepted = inputIndex >= inputString.length && !!state?.isAccepting;
+      const accepted = checkAcceptance(config, stateId, inputIndex, inputString.length, stack);
       paths.push({ steps, accepted });
       continue;
     }
