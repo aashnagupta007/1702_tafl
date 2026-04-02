@@ -41,6 +41,7 @@ export const EXAMPLE_PDAS: PDAConfig[] = [
     stackAlphabet: ['A', 'B', 'Z'],
     startState: 'q0',
     initialStackSymbol: 'Z',
+    acceptanceMode: 'final-state',
   },
   {
     id: 'balanced-parens',
