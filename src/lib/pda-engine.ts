@@ -67,7 +67,7 @@ export function simulatePDA(
   inputString: string
 ): ComputationPath[] {
   const paths: ComputationPath[] = [];
-  const maxSteps = 500;
+  const maxSteps = 5000;
 
   const initial: Configuration = {
     stateId: config.startState,
